@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
+import { API_URL } from "../api/http";
+
 export interface Cotacao {
   id: string;
   grupoCotacao: {
@@ -40,7 +42,7 @@ export function useCotacaoSSE(payload: any) {
     const connect = async () => {
       try {
         const response = await fetch(
-          "http://localhost:8080/api/cotacao/simular",
+          `${API_URL}/cotacao/simular`,
           {
             method: "POST",
             headers: {

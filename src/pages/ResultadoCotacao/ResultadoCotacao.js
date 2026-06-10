@@ -1,6 +1,7 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { API_URL } from "../../api/http";
 import { api } from "../../services/api";
 import styles from "./ResultadoCotacao.module.css";
 const normalizar = (value) => (value || "")
@@ -79,7 +80,7 @@ export default function ResultadoCotacao() {
         started.current = true;
         const connect = async () => {
             try {
-                const response = await fetch("http://localhost:8080/api/cotacao/simular", {
+                const response = await fetch(`${API_URL}/cotacao/simular`, {
                     method: "POST",
                     headers: {
                         Accept: "text/event-stream",
@@ -148,10 +149,22 @@ export default function ResultadoCotacao() {
             seguradora,
             cotacao: cotacoes.find(cotacao => cotacaoPertenceSeguradora(cotacao, seguradora, produtosDaSeguradora === 1))
         };
+    }).sort((a, b) => {
+        if (a.cotacao && !b.cotacao)
+            return -1;
+        if (!a.cotacao && b.cotacao)
+            return 1;
+        if (!a.cotacao || !b.cotacao) {
+            return a.seguradora.nome.localeCompare(b.seguradora.nome, "pt-BR");
+        }
+        return (Number(a.cotacao.resumoFinanceiro?.premioTotal ||
+            Infinity) -
+            Number(b.cotacao.resumoFinanceiro?.premioTotal ||
+                Infinity));
     }), [seguradoras, cotacoes]);
     const cotacaoSelecionada = cotacoes.find(cotacao => cotacao.id === cotacaoSelecionadaId);
-    const codigoCotacao = cotacaoSelecionada?.id ||
-        cotacoes[0]?.id ||
+    const codigoCotacao = cotacaoSelecionada?.grupoCotacao?.codigo ||
+        cotacoes[0]?.grupoCotacao?.codigo ||
         "Em processamento";
     const voltar = () => {
         navigate("/", {
@@ -179,11 +192,8 @@ export default function ResultadoCotacao() {
                                 setCotacaoSelecionadaId(cotacao.id), children: [_jsxs("div", { className: styles.offerTop, children: [_jsxs("div", { className: styles.brand, children: [_jsx("div", { className: styles.logoBox, children: seguradora.logo ? (_jsx("img", { src: obterLogo(seguradora.logo), alt: `Logo ${seguradora.seguradora}` })) : (_jsx("span", { children: seguradora.seguradora
                                                             .slice(0, 1) })) }), _jsxs("div", { children: [_jsx("strong", { children: seguradora.seguradora }), _jsx("span", { children: seguradora.nome })] })] }), cotacao && (_jsx("span", { className: styles.radio, children: _jsx("span", {}) }))] }), !cotacao ? (_jsxs("div", { className: styles.calculating, children: [_jsxs("div", { className: styles.dots, children: [_jsx("span", {}), _jsx("span", {}), _jsx("span", {})] }), _jsx("strong", { children: "Calculando sua oferta" }), _jsx("p", { children: "A seguradora est\u00E1 analisando os dados." })] })) : (_jsxs(_Fragment, { children: [_jsxs("div", { className: styles.priceBlock, children: [_jsx("span", { children: "Valor \u00E0 vista" }), _jsx("strong", { children: formatarMoeda(cotacao.resumoFinanceiro
                                                         ?.premioTotal) }), _jsx("p", { children: parcelamento
-                                                        ? `${parcelamento.numero}x de ${formatarMoeda(parcelamento.valor)}`
-                                                        : "Consulte as formas de pagamento" })] }), _jsxs("div", { className: styles.details, children: [_jsxs("div", { children: [_jsx("span", { children: "Produto" }), _jsx("strong", { children: cotacao.grupoCotacao
-                                                                ?.parceiro
-                                                                ?.produto ||
-                                                                seguradora.nome })] }), _jsxs("div", { children: [_jsx("span", { children: "Franquia" }), _jsx("strong", { children: cotacao.franquia
+                                                        ? `Em ${parcelamento.numero}x de ${formatarMoeda(parcelamento.valor)}`
+                                                        : "Consulte as formas de pagamento" })] }), _jsxs("div", { className: styles.details, children: [_jsxs("div", { children: [_jsx("span", { children: "Franquia" }), _jsx("strong", { children: cotacao.franquia
                                                                 ?.descricao ||
                                                                 payload.franquia
                                                                     ?.descricao ||

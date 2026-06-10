@@ -9,6 +9,7 @@ import {
     useNavigate
 } from "react-router-dom";
 
+import { API_URL } from "../../api/http";
 import { api } from "../../services/api";
 
 import styles from "./ResultadoCotacao.module.css";
@@ -213,7 +214,7 @@ export default function ResultadoCotacao() {
             try {
                 const response =
                     await fetch(
-                        "http://localhost:8080/api/cotacao/simular",
+                        `${API_URL}/cotacao/simular`,
                         {
                             method: "POST",
                             headers: {

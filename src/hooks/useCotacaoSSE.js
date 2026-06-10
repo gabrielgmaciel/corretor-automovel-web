@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { API_URL } from "../api/http";
 export function useCotacaoSSE(payload) {
     const [cotacoes, setCotacoes] = useState([]);
     const [finished, setFinished] = useState(false);
@@ -12,7 +13,7 @@ export function useCotacaoSSE(payload) {
         started.current = true;
         const connect = async () => {
             try {
-                const response = await fetch("http://localhost:8080/api/cotacao/simular", {
+                const response = await fetch(`${API_URL}/cotacao/simular`, {
                     method: "POST",
                     headers: {
                         Accept: "text/event-stream",

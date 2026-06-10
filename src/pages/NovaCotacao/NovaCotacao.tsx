@@ -212,6 +212,18 @@ export default function NovaCotacao() {
         carregarDominios();
     }, []);
 
+    useEffect(() => {
+        if (!formState) return;
+
+        navigate(
+            location.pathname,
+            {
+                replace: true,
+                state: null
+            }
+        );
+    }, []);
+
     const coberturasPrincipais =
         useMemo(
             () =>
@@ -1304,12 +1316,19 @@ export default function NovaCotacao() {
                 </div>
 
                 <div className={styles.footer}>
+                    <div className={styles.footerMessage}>
+                        <span>Pronto para comparar?</span>
+                        <strong>
+                            Solicite agora as melhores ofertas para o seu veículo
+                        </strong>
+                    </div>
+
                     <button
                         type="button"
                         className={styles.submitButton}
                         onClick={realizarCotacao}
                     >
-                        <span>Realizar Cotação</span>
+                        <span>Solicitar cotação</span>
                         <span className={styles.submitArrow}>→</span>
                     </button>
                 </div>
