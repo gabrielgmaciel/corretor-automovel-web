@@ -69,6 +69,14 @@ export default function NovaCotacao() {
     useEffect(() => {
         carregarDominios();
     }, []);
+    useEffect(() => {
+        if (!formState)
+            return;
+        navigate(location.pathname, {
+            replace: true,
+            state: null
+        });
+    }, []);
     const coberturasPrincipais = useMemo(() => coberturas.filter(cobertura => cobertura.tipoCobertura === "coberturas_principais" ||
         cobertura.codigo === "casco"), [coberturas]);
     const coberturasAdicionais = useMemo(() => coberturas.filter(cobertura => cobertura.tipoCobertura === "coberturas_adicionais"), [coberturas]);
