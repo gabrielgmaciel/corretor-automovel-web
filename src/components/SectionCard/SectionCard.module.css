@@ -1,0 +1,135 @@
+.card{
+    background:rgba(255,255,255,.88);
+    border:1px solid rgba(203,213,225,.72);
+    border-radius:24px;
+    overflow:hidden;
+    box-shadow:
+        0 1px 2px rgba(15,23,42,.03),
+        0 12px 32px rgba(15,23,42,.045);
+    backdrop-filter:blur(18px);
+    transition:border-color .25s ease,box-shadow .25s ease,transform .25s ease;
+}
+
+.card:hover{
+    border-color:rgba(148,163,184,.75);
+    box-shadow:
+        0 1px 2px rgba(15,23,42,.04),
+        0 18px 42px rgba(15,23,42,.065);
+}
+
+.cardAllowOverflow{
+    position:relative;
+    z-index:30;
+    overflow:visible;
+}
+
+.cardAllowOverflow .header{
+    border-radius:23px;
+}
+
+.cardAllowOverflow.cardOpen .header{
+    border-radius:23px 23px 0 0;
+}
+
+.header{
+    width:100%;
+    border:none;
+    background:transparent;
+    padding:23px 26px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    transition:background .2s ease;
+}
+
+.header:hover{
+    background:rgba(248,250,252,.8);
+}
+
+.heading{
+    display:flex;
+    align-items:center;
+    gap:13px;
+}
+
+.marker{
+    width:4px;
+    height:22px;
+    border-radius:999px;
+    background:linear-gradient(180deg,#14b8a6,#2563eb);
+    box-shadow:0 0 0 4px rgba(20,184,166,.08);
+}
+
+.title{
+    font-size:17px;
+    font-weight:750;
+    letter-spacing:-.02em;
+    color:#172033;
+}
+
+.icon{
+    width:36px;
+    height:36px;
+    border-radius:999px;
+    border:1px solid #dbe5f0;
+    background:#f8fafc;
+    color:#475569;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:background .2s ease,border-color .2s ease,color .2s ease;
+}
+
+.icon::before{
+    content:"";
+    width:8px;
+    height:8px;
+    margin-top:-4px;
+    border-right:2px solid currentColor;
+    border-bottom:2px solid currentColor;
+    transform:rotate(45deg);
+    transition:transform .25s ease,margin .25s ease;
+}
+
+.iconOpen{
+    background:#e9fbf7;
+    border-color:#bcece2;
+    color:#0f766e;
+}
+
+.iconOpen::before{
+    margin-top:4px;
+    transform:rotate(225deg);
+}
+
+.content{
+    padding:28px 26px 30px;
+    border-top:1px solid rgba(226,232,240,.85);
+    animation:reveal .24s ease both;
+}
+
+@keyframes reveal{
+    from{
+        opacity:0;
+        transform:translateY(-4px);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
+
+@media(max-width:700px){
+    .header{
+        padding:18px 20px;
+    }
+
+    .content{
+        padding:20px;
+    }
+
+    .title{
+        font-size:16px;
+    }
+}

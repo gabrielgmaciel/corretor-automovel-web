@@ -1,1 +1,1 @@
-# corretor-automovel-web
+Projeto inicial do corretor de automóvel com React + Vite + TypeScript.
