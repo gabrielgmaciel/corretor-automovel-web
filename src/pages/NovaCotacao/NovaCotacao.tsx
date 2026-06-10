@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { api } from "../../services/api";
 
@@ -101,87 +101,100 @@ const formatarCep = (value: string) =>
 export default function NovaCotacao() {
 
     const navigate = useNavigate();
+    const location = useLocation();
+    const formState =
+        location.state?.formState;
 
     const [cpf, setCpf] =
-        useState("");
+        useState(formState?.cpf || "");
 
     const [nome, setNome] =
-        useState("");
+        useState(formState?.nome || "");
 
     const [email, setEmail] =
-        useState("");
+        useState(formState?.email || "");
 
     const [telefone, setTelefone] =
-        useState("");
+        useState(formState?.telefone || "");
 
     const [dataNascimento, setDataNascimento] =
-        useState("");
+        useState(formState?.dataNascimento || "");
 
     const [sexo, setSexo] =
-        useState("MASCULINO");
+        useState(formState?.sexo || "MASCULINO");
 
     const [estadoCivil, setEstadoCivil] =
-        useState("");
+        useState(formState?.estadoCivil || "");
 
     const [cep, setCep] =
-        useState("");
+        useState(formState?.cep || "");
 
     const [endereco, setEndereco] =
-        useState<Endereco>({});
+        useState<Endereco>(formState?.endereco || {});
 
     const [numero, setNumero] =
-        useState("");
+        useState(formState?.numero || "");
 
     const [complemento, setComplemento] =
-        useState("");
+        useState(formState?.complemento || "");
 
     const [modeloBusca, setModeloBusca] =
-        useState("");
+        useState(formState?.modeloBusca || "");
 
     const [veiculos, setVeiculos] =
         useState<Veiculo[]>([]);
 
     const [veiculoSelecionado, setVeiculoSelecionado] =
-        useState<Veiculo>();
+        useState<Veiculo | undefined>(formState?.veiculoSelecionado);
 
     const [anoFabricacao, setAnoFabricacao] =
-        useState("");
+        useState(formState?.anoFabricacao || "");
 
     const [anoModelo, setAnoModelo] =
-        useState("");
+        useState(formState?.anoModelo || "");
 
     const [placa, setPlaca] =
-        useState("");
+        useState(formState?.placa || "");
 
     const [chassi, setChassi] =
-        useState("");
+        useState(formState?.chassi || "");
 
     const [questionario, setQuestionario] =
         useState<PerguntaQuestionario[]>([]);
 
     const [respostasQuestionario, setRespostasQuestionario] =
-        useState<Record<string, string>>({});
+        useState<Record<string, string>>(
+            formState?.respostasQuestionario || {}
+        );
 
     const [franquias, setFranquias] =
         useState<Franquia[]>([]);
 
     const [franquiaSelecionada, setFranquiaSelecionada] =
-        useState("");
+        useState(formState?.franquiaSelecionada || "");
 
     const [coberturas, setCoberturas] =
         useState<Cobertura[]>([]);
 
     const [valoresCoberturasPrincipais, setValoresCoberturasPrincipais] =
-        useState<Record<string, string>>({});
+        useState<Record<string, string>>(
+            formState?.valoresCoberturasPrincipais || {}
+        );
 
     const [valoresProtecoes, setValoresProtecoes] =
-        useState<Record<string, string>>({});
+        useState<Record<string, string>>(
+            formState?.valoresProtecoes || {}
+        );
 
     const [coberturasAdicionaisSelecionadas, setCoberturasAdicionaisSelecionadas] =
-        useState<Cobertura[]>([]);
+        useState<Cobertura[]>(
+            formState?.coberturasAdicionaisSelecionadas || []
+        );
 
     const [acessoriosSelecionados, setAcessoriosSelecionados] =
-        useState<Cobertura[]>([]);
+        useState<Cobertura[]>(
+            formState?.acessoriosSelecionados || []
+        );
 
     const [loadingDominios, setLoadingDominios] =
         useState(false);
@@ -632,7 +645,34 @@ export default function NovaCotacao() {
         navigate(
             "/resultado",
             {
-                state: payload
+                state: {
+                    payload,
+                    formState: {
+                        cpf,
+                        nome,
+                        email,
+                        telefone,
+                        dataNascimento,
+                        sexo,
+                        estadoCivil,
+                        cep,
+                        endereco,
+                        numero,
+                        complemento,
+                        modeloBusca,
+                        veiculoSelecionado,
+                        anoFabricacao,
+                        anoModelo,
+                        placa,
+                        chassi,
+                        respostasQuestionario,
+                        franquiaSelecionada,
+                        valoresCoberturasPrincipais,
+                        valoresProtecoes,
+                        coberturasAdicionaisSelecionadas,
+                        acessoriosSelecionados
+                    }
+                }
             }
         );
     };

@@ -1,6 +1,6 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { api } from "../../services/api";
 import SectionCard from "../../components/SectionCard/SectionCard";
 import MultiSelectChips from "../../components/MultiSelectChips/MultiSelectChips";
@@ -33,33 +33,35 @@ const formatarCep = (value) => somenteNumeros(value)
     .replace(/^(\d{5})(\d)/, "$1-$2");
 export default function NovaCotacao() {
     const navigate = useNavigate();
-    const [cpf, setCpf] = useState("");
-    const [nome, setNome] = useState("");
-    const [email, setEmail] = useState("");
-    const [telefone, setTelefone] = useState("");
-    const [dataNascimento, setDataNascimento] = useState("");
-    const [sexo, setSexo] = useState("MASCULINO");
-    const [estadoCivil, setEstadoCivil] = useState("");
-    const [cep, setCep] = useState("");
-    const [endereco, setEndereco] = useState({});
-    const [numero, setNumero] = useState("");
-    const [complemento, setComplemento] = useState("");
-    const [modeloBusca, setModeloBusca] = useState("");
+    const location = useLocation();
+    const formState = location.state?.formState;
+    const [cpf, setCpf] = useState(formState?.cpf || "");
+    const [nome, setNome] = useState(formState?.nome || "");
+    const [email, setEmail] = useState(formState?.email || "");
+    const [telefone, setTelefone] = useState(formState?.telefone || "");
+    const [dataNascimento, setDataNascimento] = useState(formState?.dataNascimento || "");
+    const [sexo, setSexo] = useState(formState?.sexo || "MASCULINO");
+    const [estadoCivil, setEstadoCivil] = useState(formState?.estadoCivil || "");
+    const [cep, setCep] = useState(formState?.cep || "");
+    const [endereco, setEndereco] = useState(formState?.endereco || {});
+    const [numero, setNumero] = useState(formState?.numero || "");
+    const [complemento, setComplemento] = useState(formState?.complemento || "");
+    const [modeloBusca, setModeloBusca] = useState(formState?.modeloBusca || "");
     const [veiculos, setVeiculos] = useState([]);
-    const [veiculoSelecionado, setVeiculoSelecionado] = useState();
-    const [anoFabricacao, setAnoFabricacao] = useState("");
-    const [anoModelo, setAnoModelo] = useState("");
-    const [placa, setPlaca] = useState("");
-    const [chassi, setChassi] = useState("");
+    const [veiculoSelecionado, setVeiculoSelecionado] = useState(formState?.veiculoSelecionado);
+    const [anoFabricacao, setAnoFabricacao] = useState(formState?.anoFabricacao || "");
+    const [anoModelo, setAnoModelo] = useState(formState?.anoModelo || "");
+    const [placa, setPlaca] = useState(formState?.placa || "");
+    const [chassi, setChassi] = useState(formState?.chassi || "");
     const [questionario, setQuestionario] = useState([]);
-    const [respostasQuestionario, setRespostasQuestionario] = useState({});
+    const [respostasQuestionario, setRespostasQuestionario] = useState(formState?.respostasQuestionario || {});
     const [franquias, setFranquias] = useState([]);
-    const [franquiaSelecionada, setFranquiaSelecionada] = useState("");
+    const [franquiaSelecionada, setFranquiaSelecionada] = useState(formState?.franquiaSelecionada || "");
     const [coberturas, setCoberturas] = useState([]);
-    const [valoresCoberturasPrincipais, setValoresCoberturasPrincipais] = useState({});
-    const [valoresProtecoes, setValoresProtecoes] = useState({});
-    const [coberturasAdicionaisSelecionadas, setCoberturasAdicionaisSelecionadas] = useState([]);
-    const [acessoriosSelecionados, setAcessoriosSelecionados] = useState([]);
+    const [valoresCoberturasPrincipais, setValoresCoberturasPrincipais] = useState(formState?.valoresCoberturasPrincipais || {});
+    const [valoresProtecoes, setValoresProtecoes] = useState(formState?.valoresProtecoes || {});
+    const [coberturasAdicionaisSelecionadas, setCoberturasAdicionaisSelecionadas] = useState(formState?.coberturasAdicionaisSelecionadas || []);
+    const [acessoriosSelecionados, setAcessoriosSelecionados] = useState(formState?.acessoriosSelecionados || []);
     const [loadingDominios, setLoadingDominios] = useState(false);
     const [loadingVeiculos, setLoadingVeiculos] = useState(false);
     const [erro, setErro] = useState("");
@@ -302,7 +304,34 @@ export default function NovaCotacao() {
             ]
         };
         navigate("/resultado", {
-            state: payload
+            state: {
+                payload,
+                formState: {
+                    cpf,
+                    nome,
+                    email,
+                    telefone,
+                    dataNascimento,
+                    sexo,
+                    estadoCivil,
+                    cep,
+                    endereco,
+                    numero,
+                    complemento,
+                    modeloBusca,
+                    veiculoSelecionado,
+                    anoFabricacao,
+                    anoModelo,
+                    placa,
+                    chassi,
+                    respostasQuestionario,
+                    franquiaSelecionada,
+                    valoresCoberturasPrincipais,
+                    valoresProtecoes,
+                    coberturasAdicionaisSelecionadas,
+                    acessoriosSelecionados
+                }
+            }
         });
     };
     return (_jsx("div", { className: styles.page, children: _jsxs("div", { className: styles.container, children: [_jsxs("div", { className: styles.hero, children: [_jsxs("div", { children: [_jsx("span", { className: styles.eyebrow, children: "Seguro Auto" }), _jsx("h1", { className: styles.title, children: "Nova Cota\u00E7\u00E3o" }), _jsx("p", { className: styles.subtitle, children: "Preencha os dados abaixo para montar uma cota\u00E7\u00E3o personalizada." })] }), _jsxs("div", { className: styles.heroAside, children: [_jsxs("div", { className: styles.heroBadge, children: [_jsx("span", { className: styles.statusDot }), "Cota\u00E7\u00E3o inteligente"] }), _jsxs("div", { className: styles.heroMetric, children: [_jsx("strong", { children: "Seguro sob medida" }), _jsx("span", { children: "Uma jornada simples, segura e personalizada." })] })] })] }), erro && (_jsx("div", { className: styles.alert, children: erro })), loadingDominios && (_jsx("div", { className: styles.loading, children: "Carregando dados da cota\u00E7\u00E3o..." })), _jsxs("div", { className: styles.sections, children: [_jsx(SectionCard, { title: "Segurado", defaultOpen: true, children: _jsxs("div", { className: styles.grid3, children: [_jsxs("div", { className: styles.field, children: [_jsx("label", { children: "CPF *" }), _jsx("input", { className: styles.input, placeholder: "000.000.000-00", value: cpf, onChange: e => setCpf(formatarCpf(e.target.value)), inputMode: "numeric", maxLength: 14 })] }), _jsxs("div", { className: styles.field, children: [_jsx("label", { children: "Nome *" }), _jsx("input", { className: styles.input, placeholder: "Nome completo", value: nome, onChange: e => setNome(e.target.value) })] }), _jsxs("div", { className: styles.field, children: [_jsx("label", { children: "Email *" }), _jsx("input", { className: styles.input, placeholder: "email@dominio.com", value: email, onChange: e => setEmail(e.target.value) })] }), _jsxs("div", { className: styles.field, children: [_jsx("label", { children: "Telefone *" }), _jsx("input", { className: styles.input, placeholder: "(61) 99999-8888", value: telefone, onChange: e => setTelefone(formatarTelefone(e.target.value)), inputMode: "tel", maxLength: 15 })] }), _jsxs("div", { className: styles.field, children: [_jsx("label", { children: "Data de nascimento *" }), _jsx("input", { className: styles.input, type: "date", value: dataNascimento, onChange: e => setDataNascimento(e.target.value) })] }), _jsxs("div", { className: styles.field, children: [_jsx("label", { children: "Sexo *" }), _jsxs("select", { className: styles.select, value: sexo, onChange: e => setSexo(e.target.value), children: [_jsx("option", { value: "MASCULINO", children: "Masculino" }), _jsx("option", { value: "FEMININO", children: "Feminino" })] })] }), _jsxs("div", { className: styles.field, children: [_jsx("label", { children: "Estado civil *" }), _jsxs("select", { className: styles.select, value: estadoCivil, onChange: e => setEstadoCivil(e.target.value), children: [_jsx("option", { value: "", children: "Selecione" }), _jsx("option", { value: "SOLTEIRO", children: "Solteiro" }), _jsx("option", { value: "CASADO", children: "Casado" }), _jsx("option", { value: "DIVORCIADO", children: "Divorciado" }), _jsx("option", { value: "VIUVO", children: "Vi\u00FAvo" })] })] })] }) }), _jsx(SectionCard, { title: "Endere\u00E7o", children: _jsxs("div", { className: styles.grid3, children: [_jsxs("div", { className: styles.field, children: [_jsx("label", { children: "CEP *" }), _jsx("input", { className: styles.input, placeholder: "00000-000", value: cep, onChange: e => {
