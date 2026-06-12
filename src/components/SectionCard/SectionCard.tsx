@@ -7,13 +7,15 @@ interface SectionCardProps {
     children: ReactNode;
     defaultOpen?: boolean;
     allowOverflow?: boolean;
+    hasPendingFields?: boolean;
 }
 
 export default function SectionCard({
     title,
     children,
     defaultOpen = false,
-    allowOverflow = false
+    allowOverflow = false,
+    hasPendingFields = false
 }: SectionCardProps) {
 
     const [open, setOpen] =
@@ -38,7 +40,13 @@ export default function SectionCard({
                 onClick={() => setOpen(!open)}
             >
                 <span className={styles.heading}>
-                    <span className={styles.marker} />
+                    <span
+                        className={`${styles.marker} ${
+                            hasPendingFields
+                                ? styles.markerPending
+                                : ""
+                        }`}
+                    />
                     <span className={styles.title}>
                         {title}
                     </span>

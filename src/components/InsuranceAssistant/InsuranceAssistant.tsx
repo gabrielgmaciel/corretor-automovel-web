@@ -5,7 +5,10 @@ import {
     useRef,
     useState
 } from "react";
-import { useLocation } from "react-router-dom";
+import {
+    useLocation,
+    useNavigate
+} from "react-router-dom";
 
 import { api } from "../../services/api";
 
@@ -20,6 +23,29 @@ type Message = {
     role: MessageRole;
     content: string;
     createdAt: string;
+    action?: FillSuggestionAction;
+};
+
+type SuggestedCoverage = {
+    codigo: string;
+    descricao: string;
+    valor?: number | null;
+    frequencia: number;
+};
+
+type SuggestedFranchise = {
+    codigo: string;
+    descricao: string;
+    frequencia: number;
+};
+
+type FillSuggestionAction = {
+    tipo:
+        | "PREENCHER_COBERTURAS"
+        | "PREENCHER_FRANQUIA";
+    mensagem: string;
+    coberturas?: SuggestedCoverage[];
+    franquia?: SuggestedFranchise | null;
 };
 
 const STORAGE_KEY =
@@ -27,6 +53,9 @@ const STORAGE_KEY =
 
 const OPEN_STORAGE_KEY =
     "corretor-auto-assistant-open";
+
+const CONTEXT_STORAGE_KEY =
+    "corretor-auto-assistant-context";
 
 const INITIAL_MESSAGE: Message = {
     id: "welcome",
@@ -80,10 +109,94 @@ const extrairResposta = (data: unknown) => {
     ) as string | undefined;
 };
 
+const extrairAcao = (data: unknown): FillSuggestionAction | undefined => {
+    if (!data || typeof data !== "object") return undefined;
+
+    const action =
+        (data as Record<string, unknown>).acaoPreenchimento;
+
+    if (!action || typeof action !== "object") return undefined;
+
+    const typed =
+        action as Partial<FillSuggestionAction>;
+
+    if (
+        typed.tipo === "PREENCHER_COBERTURAS" &&
+        Array.isArray(typed.coberturas)
+    ) {
+        return typed as FillSuggestionAction;
+    }
+
+    if (
+        typed.tipo === "PREENCHER_FRANQUIA" &&
+        typed.franquia &&
+        typeof typed.franquia.codigo === "string"
+    ) {
+        return typed as FillSuggestionAction;
+    }
+
+    return undefined;
+};
+
+const extrairErro = (error: unknown) => {
+    if (!error || typeof error !== "object") {
+        return null;
+    }
+
+    const response =
+        (error as {
+            response?: {
+                data?: unknown;
+            };
+        }).response;
+
+    if (!response?.data || typeof response.data !== "object") {
+        return null;
+    }
+
+    const data =
+        response.data as Record<string, unknown>;
+
+    return typeof data.erro === "string"
+        ? data.erro
+        : typeof data.message === "string"
+            ? data.message
+            : null;
+};
+
+type AssistantContext = {
+    localidade?: {
+        cidade?: string;
+        estado?: string;
+        cep?: string;
+    };
+    perfil?: {
+        fabricante?: string;
+        modelo?: string;
+        anoModelo?: number;
+        respostasQuestionario?: Record<string, string>;
+    };
+};
+
+const carregarContexto = (): AssistantContext => {
+    try {
+        const stored =
+            localStorage.getItem(CONTEXT_STORAGE_KEY);
+
+        return stored
+            ? JSON.parse(stored)
+            : {};
+    } catch {
+        return {};
+    }
+};
+
 export default function InsuranceAssistant() {
 
     const location =
         useLocation();
+    const navigate =
+        useNavigate();
 
     const [open, setOpen] =
         useState(
@@ -163,11 +276,58 @@ export default function InsuranceAssistant() {
         setSending(true);
 
         try {
+            const routeState =
+                location.state as {
+                    formState?: {
+                        cep?: string;
+                        endereco?: {
+                            cidade?: string;
+                            estado?: string;
+                        };
+                        veiculoSelecionado?: {
+                            marca?: string;
+                            modelo?: string;
+                        };
+                        anoModelo?: string;
+                        respostasQuestionario?: Record<string, string>;
+                    };
+                } | null;
+            const storedContext =
+                carregarContexto();
+            const localidade =
+                routeState?.formState?.endereco
+                    ? {
+                        cidade:
+                            routeState.formState.endereco.cidade,
+                        estado:
+                            routeState.formState.endereco.estado,
+                        cep:
+                            routeState.formState.cep
+                    }
+                    : storedContext.localidade;
+            const perfil =
+                routeState?.formState
+                    ? {
+                        fabricante:
+                            routeState.formState.veiculoSelecionado?.marca,
+                        modelo:
+                            routeState.formState.veiculoSelecionado?.modelo,
+                        anoModelo:
+                            routeState.formState.anoModelo
+                                ? Number(routeState.formState.anoModelo)
+                                : undefined,
+                        respostasQuestionario:
+                            routeState.formState.respostasQuestionario
+                    }
+                    : storedContext.perfil;
+
             const response =
                 await api.post(
-                    "/assistente/chat",
+                    "/assistente",
                     {
                         mensagem: content,
+                        localidade,
+                        perfil,
                         pagina: location.pathname,
                         historico: conversation.map(
                             message => ({
@@ -180,6 +340,8 @@ export default function InsuranceAssistant() {
 
             const answer =
                 extrairResposta(response.data);
+            const action =
+                extrairAcao(response.data);
 
             if (!answer) {
                 throw new Error(
@@ -194,12 +356,16 @@ export default function InsuranceAssistant() {
                         id: criarId(),
                         role: "assistant",
                         content: answer,
+                        action,
                         createdAt:
                             new Date().toISOString()
                     }
                 ]
             );
-        } catch {
+        } catch (error) {
+            const errorMessage =
+                extrairErro(error);
+
             setMessages(
                 current => [
                     ...current,
@@ -207,6 +373,7 @@ export default function InsuranceAssistant() {
                         id: criarId(),
                         role: "assistant",
                         content:
+                            errorMessage ||
                             "Não consegui acessar o assistente agora. Verifique se o endpoint de IA está disponível e tente novamente.",
                         createdAt:
                             new Date().toISOString()
@@ -232,6 +399,78 @@ export default function InsuranceAssistant() {
 
     const limparConversa = () => {
         setMessages([INITIAL_MESSAGE]);
+    };
+
+    const aplicarSugestoes = (message: Message) => {
+        if (!message.action) return;
+
+        if (location.pathname === "/") {
+            if (message.action.tipo === "PREENCHER_FRANQUIA") {
+                window.dispatchEvent(
+                    new CustomEvent(
+                        "assistente:preencher-franquia",
+                        {
+                            detail: message.action.franquia
+                        }
+                    )
+                );
+            } else {
+                window.dispatchEvent(
+                    new CustomEvent(
+                        "assistente:preencher-coberturas",
+                        {
+                            detail: message.action.coberturas || []
+                        }
+                    )
+                );
+            }
+        } else {
+            const routeState =
+                location.state as {
+                    formState?: unknown;
+                } | null;
+
+            navigate("/", {
+                state: {
+                    formState:
+                        routeState?.formState,
+                    assistantCoverageSuggestions:
+                        message.action.tipo === "PREENCHER_COBERTURAS"
+                            ? message.action.coberturas
+                            : undefined,
+                    assistantFranchiseSuggestion:
+                        message.action.tipo === "PREENCHER_FRANQUIA"
+                            ? message.action.franquia
+                            : undefined
+                }
+            });
+        }
+
+        setMessages(current =>
+            current.map(item =>
+                item.id === message.id
+                    ? {
+                        ...item,
+                        action: undefined,
+                        content:
+                            `${item.content}\n\nSugestão aplicada ao formulário. Revise a seleção antes de continuar.`
+                    }
+                    : item
+            )
+        );
+    };
+
+    const recusarPreenchimento = (messageId: string) => {
+        setMessages(current =>
+            current.map(item =>
+                item.id === messageId
+                    ? {
+                        ...item,
+                        action: undefined
+                    }
+                    : item
+            )
+        );
     };
 
     return (
@@ -314,6 +553,33 @@ export default function InsuranceAssistant() {
                                 }`}
                             >
                                 {message.content}
+
+                                {message.action && (
+                                    <div className={styles.actionCard}>
+                                        <strong>
+                                            {message.action.mensagem}
+                                        </strong>
+
+                                        <div className={styles.actionButtons}>
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    aplicarSugestoes(message)
+                                                }
+                                            >
+                                                Aplicar
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    recusarPreenchimento(message.id)
+                                                }
+                                            >
+                                                Agora não
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ))}

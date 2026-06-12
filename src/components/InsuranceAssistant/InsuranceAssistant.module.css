@@ -455,3 +455,38 @@
         transition: none;
     }
 }
+
+.actionCard {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(15, 118, 110, .18);
+}
+
+.actionCard strong {
+    display: block;
+    margin-bottom: 10px;
+    font-size: .82rem;
+}
+
+.actionButtons {
+    display: flex;
+    gap: 8px;
+}
+
+.actionButtons button {
+    padding: 7px 11px;
+    border: 0;
+    border-radius: 9px;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.actionButtons button:first-child {
+    color: #fff;
+    background: #0f766e;
+}
+
+.actionButtons button:last-child {
+    color: #334155;
+    background: #e2e8f0;
+}

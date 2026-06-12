@@ -98,12 +98,27 @@ const formatarCep = (value: string) =>
         .slice(0, 8)
         .replace(/^(\d{5})(\d)/, "$1-$2");
 
+const ASSISTANT_CONTEXT_KEY =
+    "corretor-auto-assistant-context";
+
 export default function NovaCotacao() {
 
     const navigate = useNavigate();
     const location = useLocation();
     const formState =
         location.state?.formState;
+    const assistantCoverageSuggestions =
+        location.state?.assistantCoverageSuggestions as
+            Array<{
+                codigo: string;
+                valor?: number | null;
+            }> | undefined;
+    const assistantFranchiseSuggestion =
+        location.state?.assistantFranchiseSuggestion as
+            {
+                codigo: string;
+                descricao?: string;
+            } | undefined;
 
     const [cpf, setCpf] =
         useState(formState?.cpf || "");
@@ -166,6 +181,49 @@ export default function NovaCotacao() {
         useState<Record<string, string>>(
             formState?.respostasQuestionario || {}
         );
+
+    useEffect(() => {
+        const cidade =
+            endereco.cidade?.trim();
+        const estado =
+            endereco.estado?.trim();
+
+        if (!cidade || !estado) {
+            localStorage.removeItem(
+                ASSISTANT_CONTEXT_KEY
+            );
+            return;
+        }
+
+        localStorage.setItem(
+            ASSISTANT_CONTEXT_KEY,
+            JSON.stringify({
+                localidade: {
+                    cidade,
+                    estado,
+                    cep: somenteNumeros(cep)
+                },
+                perfil: {
+                    fabricante:
+                        veiculoSelecionado?.marca,
+                    modelo:
+                        veiculoSelecionado?.modelo,
+                    anoModelo:
+                        anoModelo
+                            ? Number(anoModelo)
+                            : undefined,
+                    respostasQuestionario
+                }
+            })
+        );
+    }, [
+        cep,
+        endereco.cidade,
+        endereco.estado,
+        veiculoSelecionado,
+        anoModelo,
+        respostasQuestionario
+    ]);
 
     const [franquias, setFranquias] =
         useState<Franquia[]>([]);
@@ -264,6 +322,160 @@ export default function NovaCotacao() {
                 ),
             [coberturas]
         );
+
+    useEffect(() => {
+        const aplicarSugestoes = (event: Event) => {
+            const sugestoes =
+                (event as CustomEvent<Array<{
+                    codigo: string;
+                    valor?: number | null;
+                }>>).detail || [];
+
+            setValoresCoberturasPrincipais(current => {
+                const next = { ...current };
+                sugestoes.forEach(sugestao => {
+                    if (
+                        sugestao.valor != null &&
+                        coberturasPrincipais.some(
+                            item =>
+                                item.codigo === sugestao.codigo &&
+                                item.codigo !== "casco"
+                        )
+                    ) {
+                        next[sugestao.codigo] =
+                            sugestao.valor.toLocaleString(
+                                "pt-BR",
+                                {
+                                    style: "currency",
+                                    currency: "BRL"
+                                }
+                            );
+                    }
+                });
+                return next;
+            });
+
+            setValoresProtecoes(current => {
+                const next = { ...current };
+                sugestoes.forEach(sugestao => {
+                    if (
+                        sugestao.valor != null &&
+                        protecoes.some(item => item.codigo === sugestao.codigo)
+                    ) {
+                        next[sugestao.codigo] =
+                            sugestao.valor.toLocaleString(
+                                "pt-BR",
+                                {
+                                    style: "currency",
+                                    currency: "BRL"
+                                }
+                            );
+                    }
+                });
+                return next;
+            });
+
+            setCoberturasAdicionaisSelecionadas(current => {
+                const codigos = new Set(current.map(item => item.codigo));
+                return [
+                    ...current,
+                    ...coberturasAdicionais.filter(item =>
+                        sugestoes.some(sugestao =>
+                            sugestao.codigo === item.codigo &&
+                            !codigos.has(item.codigo)
+                        )
+                    )
+                ];
+            });
+        };
+
+        window.addEventListener(
+            "assistente:preencher-coberturas",
+            aplicarSugestoes
+        );
+        return () =>
+            window.removeEventListener(
+                "assistente:preencher-coberturas",
+                aplicarSugestoes
+            );
+    }, [
+        coberturasPrincipais,
+        coberturasAdicionais,
+        protecoes
+    ]);
+
+    useEffect(() => {
+        if (
+            !assistantCoverageSuggestions?.length ||
+            coberturas.length === 0
+        ) {
+            return;
+        }
+
+        window.dispatchEvent(
+            new CustomEvent(
+                "assistente:preencher-coberturas",
+                {
+                    detail:
+                        assistantCoverageSuggestions
+                }
+            )
+        );
+    }, [
+        assistantCoverageSuggestions,
+        coberturas.length
+    ]);
+
+    useEffect(() => {
+        const aplicarFranquia = (event: Event) => {
+            const sugestao =
+                (event as CustomEvent<{
+                    codigo?: string;
+                }>).detail;
+
+            if (
+                sugestao?.codigo &&
+                franquias.some(
+                    franquia =>
+                        franquia.codigo === sugestao.codigo
+                )
+            ) {
+                setFranquiaSelecionada(sugestao.codigo);
+            }
+        };
+
+        window.addEventListener(
+            "assistente:preencher-franquia",
+            aplicarFranquia
+        );
+        return () =>
+            window.removeEventListener(
+                "assistente:preencher-franquia",
+                aplicarFranquia
+            );
+    }, [franquias]);
+
+    useEffect(() => {
+        if (
+            !assistantFranchiseSuggestion?.codigo ||
+            franquias.length === 0
+        ) {
+            return;
+        }
+
+        window.dispatchEvent(
+            new CustomEvent(
+                "assistente:preencher-franquia",
+                {
+                    detail:
+                        assistantFranchiseSuggestion
+                }
+            )
+        );
+    }, [
+        assistantFranchiseSuggestion,
+        franquias.length
+    ]);
 
     const carregarDominios = async () => {
 
@@ -740,6 +952,14 @@ export default function NovaCotacao() {
                     <SectionCard
                         title="Segurado"
                         defaultOpen
+                        hasPendingFields={
+                            !cpf ||
+                            !nome ||
+                            !email ||
+                            !telefone ||
+                            !dataNascimento ||
+                            !estadoCivil
+                        }
                     >
                         <div className={styles.grid3}>
                             <div className={styles.field}>
@@ -860,7 +1080,14 @@ export default function NovaCotacao() {
                         </div>
                     </SectionCard>
 
-                    <SectionCard title="Endereço">
+                    <SectionCard
+                        title="Endereço"
+                        hasPendingFields={
+                            !cep ||
+                            !endereco.logradouro ||
+                            !numero
+                        }
+                    >
                         <div className={styles.grid3}>
                             <div className={styles.field}>
                                 <label>CEP *</label>
@@ -970,7 +1197,18 @@ export default function NovaCotacao() {
                         </div>
                     </SectionCard>
 
-                    <SectionCard title="Questionário">
+                    <SectionCard
+                        title="Questionário"
+                        hasPendingFields={
+                            questionario.length > 0 &&
+                            questionario.some(
+                                pergunta =>
+                                    !respostasQuestionario[
+                                        pergunta.codigo
+                                    ]
+                            )
+                        }
+                    >
                         <div className={styles.grid3}>
                             {questionario.map(pergunta => (
                                 <div
@@ -1027,6 +1265,13 @@ export default function NovaCotacao() {
                     <SectionCard
                         title="Veículo"
                         allowOverflow
+                        hasPendingFields={
+                            !veiculoSelecionado ||
+                            !anoFabricacao ||
+                            !anoModelo ||
+                            !placa ||
+                            !chassi
+                        }
                     >
                         <div className={styles.vehicleSearch}>
                             <div className={styles.searchField}>
@@ -1168,7 +1413,18 @@ export default function NovaCotacao() {
                         )}
                     </SectionCard>
 
-                    <SectionCard title="Coberturas Principais">
+                    <SectionCard
+                        title="Coberturas Principais"
+                        hasPendingFields={
+                            coberturasPrincipais.length > 0 &&
+                            coberturasPrincipais.some(
+                                cobertura =>
+                                    !valoresCoberturasPrincipais[
+                                        cobertura.codigo
+                                    ]
+                            )
+                        }
+                    >
                         <div className={styles.coverageGrid}>
                             {coberturasPrincipais.map(cobertura => (
                                 <div
@@ -1215,7 +1471,10 @@ export default function NovaCotacao() {
                         </div>
                     </SectionCard>
 
-                    <SectionCard title="Franquia">
+                    <SectionCard
+                        title="Franquia"
+                        hasPendingFields={!franquiaSelecionada}
+                    >
                         <div className={styles.field}>
                             <label>Selecione a franquia *</label>
 
