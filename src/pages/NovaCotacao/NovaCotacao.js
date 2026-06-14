@@ -6,6 +6,12 @@ import SectionCard from "../../components/SectionCard/SectionCard";
 import MultiSelectChips from "../../components/MultiSelectChips/MultiSelectChips";
 import styles from "./NovaCotacao.module.css";
 const somenteNumeros = (value) => value.replace(/\D/g, "");
+const normalizarTexto = (value) => value
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
 const formatarCpf = (value) => somenteNumeros(value)
     .slice(0, 11)
     .replace(/^(\d{3})(\d)/, "$1.$2")
@@ -129,6 +135,8 @@ export default function NovaCotacao() {
     const [loadingDominios, setLoadingDominios] = useState(false);
     const [loadingVeiculos, setLoadingVeiculos] = useState(false);
     const [erro, setErro] = useState("");
+    const [importandoApolice, setImportandoApolice] = useState(false);
+    const [resultadoApolice, setResultadoApolice] = useState([]);
     const buscaVeiculoId = useRef(0);
     useEffect(() => {
         carregarDominios();
@@ -315,6 +323,198 @@ export default function NovaCotacao() {
         setPlaca("");
         setChassi("");
     };
+    const encontrarDominioPorDescricao = (itens, descricao) => {
+        const procurado = normalizarTexto(descricao);
+        return itens.find(item => {
+            const dominio = normalizarTexto(item.descricao);
+            return dominio === procurado
+                || dominio.includes(procurado)
+                || procurado.includes(dominio);
+        });
+    };
+    const importarApolice = async (arquivo) => {
+        if (!arquivo)
+            return;
+        setImportandoApolice(true);
+        setErro("");
+        setResultadoApolice([]);
+        try {
+            const formulario = new FormData();
+            formulario.append("arquivo", arquivo);
+            const response = await api.post("/assistente/apolice", formulario, {
+                headers: {
+                    "Content-Type": "multipart/form-data"
+                },
+                timeout: 180000
+            });
+            const dados = response.data;
+            const avisos = [...(dados.avisos || [])];
+            if (dados.segurado?.cpf) {
+                setCpf(formatarCpf(dados.segurado.cpf));
+            }
+            if (dados.segurado?.nome)
+                setNome(dados.segurado.nome);
+            if (dados.segurado?.email)
+                setEmail(dados.segurado.email);
+            if (dados.segurado?.telefone) {
+                setTelefone(formatarTelefone(dados.segurado.telefone));
+            }
+            if (dados.segurado?.dataNascimento) {
+                setDataNascimento(dados.segurado.dataNascimento);
+            }
+            if (dados.segurado?.sexo) {
+                setSexo(dados.segurado.sexo.toUpperCase());
+            }
+            if (dados.segurado?.estadoCivil) {
+                setEstadoCivil(dados.segurado.estadoCivil.toUpperCase());
+            }
+            if (dados.endereco) {
+                if (dados.endereco.cep) {
+                    setCep(formatarCep(dados.endereco.cep));
+                }
+                if (dados.endereco.numero)
+                    setNumero(dados.endereco.numero);
+                if (dados.endereco.complemento) {
+                    setComplemento(dados.endereco.complemento);
+                }
+                setEndereco(current => ({
+                    ...current,
+                    logradouro: dados.endereco?.logradouro || current.logradouro,
+                    bairro: dados.endereco?.bairro || current.bairro,
+                    cidade: dados.endereco?.cidade || current.cidade,
+                    estado: dados.endereco?.estado || current.estado,
+                    cep: dados.endereco?.cep || current.cep
+                }));
+            }
+            if (dados.veiculo?.codigoFipe
+                || dados.veiculo?.fabricante
+                || dados.veiculo?.modelo) {
+                const descricao = [
+                    dados.veiculo.fabricante,
+                    dados.veiculo.modelo
+                ].filter(Boolean).join(" ");
+                let veiculosEncontrados = [];
+                if (dados.veiculo.codigoFipe) {
+                    try {
+                        const responseFipe = await api.get("/automovel/buscar/fipe", {
+                            params: {
+                                codigoFipe: dados.veiculo.codigoFipe
+                            }
+                        });
+                        veiculosEncontrados = responseFipe.data;
+                    }
+                    catch {
+                        avisos.push(`Não foi possível buscar pelo código FIPE ${dados.veiculo.codigoFipe}. A busca continuará pelo modelo.`);
+                    }
+                }
+                if (veiculosEncontrados.length === 0
+                    && descricao) {
+                    const responseModelo = await api.get("/automovel/buscar/modelo", {
+                        params: {
+                            descricao
+                        }
+                    });
+                    veiculosEncontrados = responseModelo.data;
+                }
+                const modeloApolice = normalizarTexto(dados.veiculo.modelo || "");
+                const veiculo = modeloApolice
+                    ? veiculosEncontrados.find(item => normalizarTexto(item.modelo).includes(modeloApolice)) || veiculosEncontrados[0]
+                    : veiculosEncontrados[0];
+                if (veiculo) {
+                    selecionarVeiculo(veiculo);
+                    if (dados.veiculo.anoFabricacao) {
+                        const ano = String(dados.veiculo.anoFabricacao);
+                        if (veiculo.anoFabricacao.includes(ano)) {
+                            setAnoFabricacao(ano);
+                        }
+                        else {
+                            avisos.push(`Ano de fabricação ${ano} não disponível para o veículo encontrado.`);
+                        }
+                    }
+                    if (dados.veiculo.anoModelo) {
+                        const ano = String(dados.veiculo.anoModelo);
+                        if (veiculo.anoModelo.includes(ano)) {
+                            setAnoModelo(ano);
+                        }
+                        else {
+                            avisos.push(`Ano modelo ${ano} não disponível para o veículo encontrado.`);
+                        }
+                    }
+                    if (dados.veiculo.placa) {
+                        setPlaca(dados.veiculo.placa.toUpperCase());
+                    }
+                    if (dados.veiculo.chassi) {
+                        setChassi(dados.veiculo.chassi.toUpperCase());
+                    }
+                }
+                else {
+                    const identificacao = dados.veiculo.codigoFipe
+                        ? `código FIPE ${dados.veiculo.codigoFipe}`
+                        : descricao;
+                    avisos.push(`Veículo não encontrado no catálogo: ${identificacao}.`);
+                }
+            }
+            if (dados.franquia?.descricao) {
+                const franquia = encontrarDominioPorDescricao(franquias, dados.franquia.descricao);
+                if (franquia) {
+                    setFranquiaSelecionada(franquia.codigo);
+                }
+                else {
+                    avisos.push(`Franquia não associada: ${dados.franquia.descricao}.`);
+                }
+            }
+            const adicionais = [];
+            const acessoriosImportados = [];
+            const valoresPrincipais = {};
+            const valoresProtecaoImportados = {};
+            for (const item of dados.coberturas || []) {
+                if (!item.descricao)
+                    continue;
+                const cobertura = encontrarDominioPorDescricao(coberturas, item.descricao);
+                if (!cobertura) {
+                    avisos.push(`Cobertura não associada: ${item.descricao}.`);
+                    continue;
+                }
+                if (cobertura.tipoCobertura === "coberturas_principais"
+                    || cobertura.codigo === "casco") {
+                    if (item.valor != null) {
+                        valoresPrincipais[cobertura.codigo] =
+                            formatarMoedaInput(String(Math.round(item.valor * 100)));
+                    }
+                }
+                else if (cobertura.tipoCobertura === "coberturas_adicionais") {
+                    adicionais.push(cobertura);
+                }
+                else if (cobertura.tipoCobertura === "acessorios") {
+                    acessoriosImportados.push(cobertura);
+                }
+                else if (cobertura.tipoCobertura === "protecoes"
+                    && item.valor != null) {
+                    valoresProtecaoImportados[cobertura.codigo] =
+                        formatarMoedaInput(String(Math.round(item.valor * 100)));
+                }
+            }
+            setValoresCoberturasPrincipais(current => ({
+                ...current,
+                ...valoresPrincipais
+            }));
+            setValoresProtecoes(current => ({
+                ...current,
+                ...valoresProtecaoImportados
+            }));
+            setCoberturasAdicionaisSelecionadas(adicionais);
+            setAcessoriosSelecionados(acessoriosImportados);
+            setResultadoApolice(avisos.length > 0
+                ? avisos
+                : ["Dados da apólice preenchidos. Revise antes de continuar."]);
+        }
+        catch (error) {
+            setErro("Não foi possível ler a apólice. Verifique o PDF e tente novamente.");
+        }
+        finally {
+            setImportandoApolice(false);
+        }
+    };
     const formatarMoedaInput = (value) => {
         const onlyNumbers = value.replace(/\D/g, "");
         if (!onlyNumbers)
@@ -489,7 +689,13 @@ export default function NovaCotacao() {
             }
         });
     };
-    return (_jsx("div", { className: styles.page, children: _jsxs("div", { className: styles.container, children: [_jsxs("div", { className: styles.hero, children: [_jsxs("div", { children: [_jsx("span", { className: styles.eyebrow, children: "Seguro Auto" }), _jsx("h1", { className: styles.title, children: "Nova Cota\u00E7\u00E3o" }), _jsx("p", { className: styles.subtitle, children: "Preencha os dados abaixo para montar uma cota\u00E7\u00E3o personalizada." })] }), _jsxs("div", { className: styles.heroAside, children: [_jsxs("div", { className: styles.heroBadge, children: [_jsx("span", { className: styles.statusDot }), "Cota\u00E7\u00E3o inteligente"] }), _jsxs("div", { className: styles.heroMetric, children: [_jsx("strong", { children: "Seguro sob medida" }), _jsx("span", { children: "Uma jornada simples, segura e personalizada." })] })] })] }), erro && (_jsx("div", { className: styles.alert, children: erro })), loadingDominios && (_jsx("div", { className: styles.loading, children: "Carregando dados da cota\u00E7\u00E3o..." })), _jsxs("div", { className: styles.sections, children: [_jsx(SectionCard, { title: "Segurado", defaultOpen: true, hasPendingFields: !cpf ||
+    return (_jsx("div", { className: styles.page, children: _jsxs("div", { className: styles.container, children: [_jsxs("div", { className: styles.hero, children: [_jsxs("div", { children: [_jsx("span", { className: styles.eyebrow, children: "Seguro Auto" }), _jsx("h1", { className: styles.title, children: "Nova Cota\u00E7\u00E3o" }), _jsx("p", { className: styles.subtitle, children: "Preencha os dados abaixo para montar uma cota\u00E7\u00E3o personalizada." })] }), _jsxs("div", { className: styles.heroAside, children: [_jsxs("div", { className: styles.heroBadge, children: [_jsx("span", { className: styles.statusDot }), "Cota\u00E7\u00E3o inteligente"] }), _jsxs("div", { className: styles.heroMetric, children: [_jsx("strong", { children: "Seguro sob medida" }), _jsx("span", { children: "Uma jornada simples, segura e personalizada." })] })] })] }), erro && (_jsx("div", { className: styles.alert, children: erro })), loadingDominios && (_jsx("div", { className: styles.loading, children: "Carregando dados da cota\u00E7\u00E3o..." })), _jsxs("div", { className: styles.policyImport, children: [_jsxs("div", { children: [_jsx("strong", { children: "Importar ap\u00F3lice em PDF" }), _jsx("span", { children: "A assistente virtual l\u00EA o documento e preenche os campos encontrados. Revise todos os dados antes de realizar a cota\u00E7\u00E3o." })] }), _jsxs("label", { className: styles.policyImportButton, children: [importandoApolice
+                                    ? "Lendo apólice..."
+                                    : "Selecionar PDF", _jsx("input", { type: "file", accept: "application/pdf,.pdf", disabled: importandoApolice, onChange: event => {
+                                        const arquivo = event.target.files?.[0];
+                                        void importarApolice(arquivo);
+                                        event.target.value = "";
+                                    } })] })] }), resultadoApolice.length > 0 && (_jsx("div", { className: styles.policyImportResult, children: resultadoApolice.map(aviso => (_jsx("span", { children: aviso }, aviso))) })), _jsxs("div", { className: styles.sections, children: [_jsx(SectionCard, { title: "Segurado", defaultOpen: true, hasPendingFields: !cpf ||
                                 !nome ||
                                 !email ||
                                 !telefone ||

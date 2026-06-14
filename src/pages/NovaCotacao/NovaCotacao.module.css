@@ -1037,3 +1037,82 @@
         transition:none;
     }
 }
+.policyImport {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 16px;
+    padding: 18px 20px;
+    border: 1px solid #cbdcf7;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #f8fbff 0%, #eef5ff 100%);
+}
+
+.policyImport > div {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.policyImport strong {
+    color: #173b70;
+    font-size: 15px;
+}
+
+.policyImport span {
+    color: #5a6d88;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.policyImportButton {
+    flex: 0 0 auto;
+    padding: 11px 17px;
+    border-radius: 10px;
+    background: #1f5faa;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.policyImportButton:hover {
+    background: #174d8d;
+    transform: translateY(-1px);
+}
+
+.policyImportButton:has(input:disabled) {
+    cursor: wait;
+    opacity: 0.7;
+    transform: none;
+}
+
+.policyImportButton input {
+    display: none;
+}
+
+.policyImportResult {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin: -4px 0 16px;
+    padding: 12px 16px;
+    border-left: 3px solid #dfa72b;
+    border-radius: 8px;
+    background: #fff9e9;
+    color: #65501f;
+    font-size: 13px;
+}
+
+@media (max-width: 720px) {
+    .policyImport {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .policyImportButton {
+        text-align: center;
+    }
+}
