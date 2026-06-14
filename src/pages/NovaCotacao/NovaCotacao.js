@@ -54,6 +54,37 @@ export default function NovaCotacao() {
     const [veiculoSelecionado, setVeiculoSelecionado] = useState(formState?.veiculoSelecionado);
     const [anoFabricacao, setAnoFabricacao] = useState(formState?.anoFabricacao || "");
     const [anoModelo, setAnoModelo] = useState(formState?.anoModelo || "");
+    const ordenarAnosDecrescente = (anos) => [...new Set(anos)].sort((anoA, anoB) => Number(anoB) - Number(anoA));
+    const anosFabricacaoOrdenados = veiculoSelecionado
+        ? ordenarAnosDecrescente(veiculoSelecionado.anoFabricacao)
+        : [];
+    const anosModeloOrdenados = veiculoSelecionado
+        ? ordenarAnosDecrescente(veiculoSelecionado.anoModelo)
+        : [];
+    const anosFabricacaoDisponiveis = anoModelo
+        ? anosFabricacaoOrdenados.filter(ano => Number(ano) === Number(anoModelo)
+            || Number(ano) === Number(anoModelo) - 1)
+        : anosFabricacaoOrdenados;
+    const anosModeloDisponiveis = anoFabricacao
+        ? anosModeloOrdenados.filter(ano => Number(ano) === Number(anoFabricacao)
+            || Number(ano) === Number(anoFabricacao) + 1)
+        : anosModeloOrdenados;
+    const alterarAnoFabricacao = (ano) => {
+        setAnoFabricacao(ano);
+        if (anoModelo
+            && Number(anoModelo) !== Number(ano)
+            && Number(anoModelo) !== Number(ano) + 1) {
+            setAnoModelo("");
+        }
+    };
+    const alterarAnoModelo = (ano) => {
+        setAnoModelo(ano);
+        if (anoFabricacao
+            && Number(anoFabricacao) !== Number(ano)
+            && Number(anoFabricacao) !== Number(ano) - 1) {
+            setAnoFabricacao("");
+        }
+    };
     const [placa, setPlaca] = useState(formState?.placa || "");
     const [chassi, setChassi] = useState(formState?.chassi || "");
     const [questionario, setQuestionario] = useState([]);
@@ -492,7 +523,7 @@ export default function NovaCotacao() {
                                 !chassi, children: [_jsx("div", { className: styles.vehicleSearch, children: _jsxs("div", { className: styles.searchField, children: [_jsx("label", { children: "Modelo do ve\u00EDculo *" }), _jsx("input", { className: styles.input, placeholder: "Digite o modelo. Ex: Civic", value: modeloBusca, onChange: e => alterarModeloBusca(e.target.value) }), modeloBusca.trim() &&
                                                 !veiculoSelecionado && (_jsxs("div", { className: styles.vehicleResults, children: [loadingVeiculos && (_jsx("div", { className: styles.vehicleResultMessage, children: "Buscando ve\u00EDculos..." })), !loadingVeiculos &&
                                                         veiculos.length === 0 && (_jsx("div", { className: styles.vehicleResultMessage, children: "Nenhum ve\u00EDculo encontrado" })), !loadingVeiculos &&
-                                                        veiculos.map(veiculo => (_jsxs("button", { type: "button", className: styles.vehicleResult, onClick: () => selecionarVeiculo(veiculo), children: [veiculo.marca, " - ", veiculo.modelo] }, veiculo.codigoFipe)))] }))] }) }), veiculoSelecionado && (_jsxs("div", { className: styles.vehicleDetails, children: [_jsxs("div", { className: styles.selectedVehicle, children: [_jsx("span", { children: "Ve\u00EDculo selecionado" }), _jsx("strong", { children: veiculoSelecionado.modelo })] }), _jsxs("div", { className: styles.grid4, children: [_jsxs("div", { className: styles.field, children: [_jsx("label", { children: "Ano fabrica\u00E7\u00E3o *" }), _jsxs("select", { className: styles.select, value: anoFabricacao, onChange: e => setAnoFabricacao(e.target.value), children: [_jsx("option", { value: "", children: "Selecione" }), veiculoSelecionado.anoFabricacao.map(ano => (_jsx("option", { value: ano, children: ano }, ano)))] })] }), _jsxs("div", { className: styles.field, children: [_jsx("label", { children: "Ano modelo *" }), _jsxs("select", { className: styles.select, value: anoModelo, onChange: e => setAnoModelo(e.target.value), children: [_jsx("option", { value: "", children: "Selecione" }), veiculoSelecionado.anoModelo.map(ano => (_jsx("option", { value: ano, children: ano }, ano)))] })] }), _jsxs("div", { className: styles.field, children: [_jsx("label", { children: "Placa *" }), _jsx("input", { className: styles.input, placeholder: "ABC1D23", value: placa, onChange: e => setPlaca(e.target.value.toUpperCase()) })] }), _jsxs("div", { className: styles.field, children: [_jsx("label", { children: "Chassi *" }), _jsx("input", { className: styles.input, placeholder: "9BWZZZ377VT004251", value: chassi, onChange: e => setChassi(e.target.value.toUpperCase()) })] })] })] }))] }), _jsx(SectionCard, { title: "Coberturas Principais", hasPendingFields: coberturasPrincipais.length > 0 &&
+                                                        veiculos.map(veiculo => (_jsxs("button", { type: "button", className: styles.vehicleResult, onClick: () => selecionarVeiculo(veiculo), children: [veiculo.marca, " - ", veiculo.modelo] }, veiculo.codigoFipe)))] }))] }) }), veiculoSelecionado && (_jsxs("div", { className: styles.vehicleDetails, children: [_jsxs("div", { className: styles.selectedVehicle, children: [_jsx("span", { children: "Ve\u00EDculo selecionado" }), _jsx("strong", { children: veiculoSelecionado.modelo })] }), _jsxs("div", { className: styles.grid4, children: [_jsxs("div", { className: styles.field, children: [_jsx("label", { children: "Ano fabrica\u00E7\u00E3o *" }), _jsxs("select", { className: styles.select, value: anoFabricacao, onChange: e => alterarAnoFabricacao(e.target.value), children: [_jsx("option", { value: "", children: "Selecione" }), anosFabricacaoDisponiveis.map(ano => (_jsx("option", { value: ano, children: ano }, ano)))] })] }), _jsxs("div", { className: styles.field, children: [_jsx("label", { children: "Ano modelo *" }), _jsxs("select", { className: styles.select, value: anoModelo, onChange: e => alterarAnoModelo(e.target.value), children: [_jsx("option", { value: "", children: "Selecione" }), anosModeloDisponiveis.map(ano => (_jsx("option", { value: ano, children: ano }, ano)))] })] }), _jsxs("div", { className: styles.field, children: [_jsx("label", { children: "Placa *" }), _jsx("input", { className: styles.input, placeholder: "ABC1D23", value: placa, onChange: e => setPlaca(e.target.value.toUpperCase()) })] }), _jsxs("div", { className: styles.field, children: [_jsx("label", { children: "Chassi *" }), _jsx("input", { className: styles.input, placeholder: "9BWZZZ377VT004251", value: chassi, onChange: e => setChassi(e.target.value.toUpperCase()) })] })] })] }))] }), _jsx(SectionCard, { title: "Coberturas Principais", hasPendingFields: coberturasPrincipais.length > 0 &&
                                 coberturasPrincipais.some(cobertura => !valoresCoberturasPrincipais[cobertura.codigo]), children: _jsx("div", { className: styles.coverageGrid, children: coberturasPrincipais.map(cobertura => (_jsxs("div", { className: styles.coverageCard, children: [_jsxs("div", { children: [_jsx("strong", { children: cobertura.descricao }), cobertura.explicacao && (_jsx("p", { children: cobertura.explicacao }))] }), _jsx("input", { className: `${styles.moneyInput} ${cobertura.codigo === "casco"
                                                 ? styles.moneyInputLocked
                                                 : ""}`, placeholder: "R$ 0,00", value: valoresCoberturasPrincipais[cobertura.codigo] || "", readOnly: cobertura.codigo === "casco", onChange: e => cobertura.codigo !== "casco" &&

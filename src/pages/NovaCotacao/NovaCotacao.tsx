@@ -168,6 +168,65 @@ export default function NovaCotacao() {
     const [anoModelo, setAnoModelo] =
         useState(formState?.anoModelo || "");
 
+    const ordenarAnosDecrescente = (anos: string[]) =>
+        [...new Set(anos)].sort(
+            (anoA, anoB) => Number(anoB) - Number(anoA)
+        );
+
+    const anosFabricacaoOrdenados =
+        veiculoSelecionado
+            ? ordenarAnosDecrescente(
+                veiculoSelecionado.anoFabricacao
+            )
+            : [];
+
+    const anosModeloOrdenados =
+        veiculoSelecionado
+            ? ordenarAnosDecrescente(
+                veiculoSelecionado.anoModelo
+            )
+            : [];
+
+    const anosFabricacaoDisponiveis =
+        anoModelo
+            ? anosFabricacaoOrdenados.filter(ano =>
+                Number(ano) === Number(anoModelo)
+                || Number(ano) === Number(anoModelo) - 1
+            )
+            : anosFabricacaoOrdenados;
+
+    const anosModeloDisponiveis =
+        anoFabricacao
+            ? anosModeloOrdenados.filter(ano =>
+                Number(ano) === Number(anoFabricacao)
+                || Number(ano) === Number(anoFabricacao) + 1
+            )
+            : anosModeloOrdenados;
+
+    const alterarAnoFabricacao = (ano: string) => {
+        setAnoFabricacao(ano);
+
+        if (
+            anoModelo
+            && Number(anoModelo) !== Number(ano)
+            && Number(anoModelo) !== Number(ano) + 1
+        ) {
+            setAnoModelo("");
+        }
+    };
+
+    const alterarAnoModelo = (ano: string) => {
+        setAnoModelo(ano);
+
+        if (
+            anoFabricacao
+            && Number(anoFabricacao) !== Number(ano)
+            && Number(anoFabricacao) !== Number(ano) - 1
+        ) {
+            setAnoFabricacao("");
+        }
+    };
+
     const [placa, setPlaca] =
         useState(formState?.placa || "");
 
@@ -1339,14 +1398,16 @@ export default function NovaCotacao() {
                                             className={styles.select}
                                             value={anoFabricacao}
                                             onChange={e =>
-                                                setAnoFabricacao(e.target.value)
+                                                alterarAnoFabricacao(
+                                                    e.target.value
+                                                )
                                             }
                                         >
                                             <option value="">
                                                 Selecione
                                             </option>
 
-                                            {veiculoSelecionado.anoFabricacao.map(ano => (
+                                            {anosFabricacaoDisponiveis.map(ano => (
                                                 <option
                                                     key={ano}
                                                     value={ano}
@@ -1363,14 +1424,16 @@ export default function NovaCotacao() {
                                             className={styles.select}
                                             value={anoModelo}
                                             onChange={e =>
-                                                setAnoModelo(e.target.value)
+                                                alterarAnoModelo(
+                                                    e.target.value
+                                                )
                                             }
                                         >
                                             <option value="">
                                                 Selecione
                                             </option>
 
-                                            {veiculoSelecionado.anoModelo.map(ano => (
+                                            {anosModeloDisponiveis.map(ano => (
                                                 <option
                                                     key={ano}
                                                     value={ano}
