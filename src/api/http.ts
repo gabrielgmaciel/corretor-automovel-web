@@ -5,7 +5,7 @@ const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL;
 export const BASE_URL =
   configuredBaseUrl === "__SAME_ORIGIN__"
     ? ""
-    : configuredBaseUrl || "http://localhost:8091";
+    : configuredBaseUrl || "";
 
 export const API_URL = `${BASE_URL}/api`;
 
