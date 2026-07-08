@@ -526,6 +526,7 @@
 
 .container{
     max-width:1280px;
+    min-width:0;
 }
 
 .hero{
@@ -542,6 +543,10 @@
     box-shadow:
         0 24px 60px rgba(15,49,68,.18),
         inset 0 1px rgba(255,255,255,.12);
+}
+
+.hero > div:first-child{
+    min-width:0;
 }
 
 .hero::before{
@@ -593,6 +598,7 @@
     font-size:42px;
     font-weight:760;
     letter-spacing:-.045em;
+    overflow-wrap:anywhere;
 }
 
 .subtitle{
@@ -689,6 +695,13 @@
 }
 
 .field,
+.searchField,
+.coverageCard,
+.vehicleCard{
+    min-width:0;
+}
+
+.field,
 .searchField{
     gap:9px;
 }
@@ -767,6 +780,7 @@
     padding:13px 14px;
     color:#263548;
     transition:background .15s ease,color .15s ease,padding-left .15s ease;
+    overflow-wrap:anywhere;
 }
 
 .vehicleResult:hover{
@@ -813,6 +827,7 @@
 .selectedVehicle strong{
     color:#172033;
     font-size:17px;
+    overflow-wrap:anywhere;
 }
 
 .coverageGrid{
@@ -844,6 +859,7 @@
 .coverageCard p{
     color:#718096;
     line-height:1.6;
+    overflow-wrap:anywhere;
 }
 
 .moneyInput{
@@ -1026,6 +1042,79 @@
         width:100%;
         height:56px;
         border-radius:16px;
+    }
+}
+
+@media(max-width:520px){
+    .page{
+        padding:14px 10px 28px;
+    }
+
+    .hero{
+        padding:24px 18px;
+        border-radius:20px;
+    }
+
+    .eyebrow{
+        max-width:100%;
+        height:auto;
+        min-height:30px;
+        white-space:normal;
+    }
+
+    .title{
+        font-size:29px;
+        line-height:1.08;
+    }
+
+    .subtitle{
+        line-height:1.55;
+    }
+
+    .heroBadge{
+        width:100%;
+        justify-content:center;
+        white-space:normal;
+        text-align:center;
+    }
+
+    .input,
+    .select,
+    .moneyInput{
+        height:48px;
+        padding-inline:13px;
+        font-size:16px;
+    }
+
+    .coverageGrid{
+        gap:14px;
+    }
+
+    .coverageCard{
+        padding:17px;
+        border-radius:16px;
+    }
+
+    .vehicleResults{
+        max-height:55vh;
+    }
+
+    .footer{
+        position:static;
+        margin-top:20px;
+        padding:16px;
+        border-radius:18px;
+    }
+
+    .footerMessage strong{
+        font-size:13px;
+        line-height:1.35;
+    }
+
+    .submitButton{
+        min-width:0;
+        max-width:none;
+        padding:0 14px;
     }
 }
 

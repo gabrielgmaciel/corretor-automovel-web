@@ -29,6 +29,7 @@
     width: 100%;
     max-width: 1280px;
     margin: 0 auto;
+    min-width: 0;
 }
 
 .summary {
@@ -89,6 +90,7 @@
     font-size: 36px;
     line-height: 1.08;
     letter-spacing: -.045em;
+    overflow-wrap: anywhere;
 }
 
 .summaryIntro p {
@@ -136,6 +138,11 @@
     white-space: nowrap;
 }
 
+.quoteCode strong {
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
 .quoteCode {
     grid-column: 1 / -1;
 }
@@ -162,6 +169,7 @@
     color: #172033;
     font-size: 27px;
     letter-spacing: -.035em;
+    overflow-wrap: anywhere;
 }
 
 .status {
@@ -275,6 +283,7 @@
 .offerTop {
     justify-content: space-between;
     gap: 16px;
+    min-width: 0;
 }
 
 .brand {
@@ -682,6 +691,110 @@
     .backButton,
     .nextButton {
         flex: 1;
+    }
+}
+
+@media (max-width: 520px) {
+    .page {
+        padding: 14px 10px 28px;
+    }
+
+    .summary {
+        padding: 24px 18px;
+        border-radius: 20px;
+    }
+
+    .eyebrow,
+    .status {
+        max-width: 100%;
+        white-space: normal;
+    }
+
+    .summaryIntro h1 {
+        font-size: 28px;
+    }
+
+    .summaryIntro p {
+        line-height: 1.55;
+    }
+
+    .customerItem {
+        padding: 14px;
+    }
+
+    .customerItem strong {
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .offersHeader h2 {
+        font-size: 24px;
+        line-height: 1.15;
+    }
+
+    .grid {
+        gap: 14px;
+    }
+
+    .offerCard {
+        padding: 18px;
+        border-radius: 18px;
+    }
+
+    .offerTop {
+        align-items: flex-start;
+    }
+
+    .logoBox {
+        flex-basis: 52px;
+        width: 52px;
+        height: 50px;
+    }
+
+    .brand strong,
+    .brand span {
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .priceBlock strong {
+        font-size: 27px;
+    }
+
+    .details > div {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .details strong {
+        max-width: 100%;
+        text-align: left;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .actionsCard {
+        position: static;
+        margin-top: 20px;
+        padding: 16px;
+        border-radius: 18px;
+    }
+
+    .actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .backButton,
+    .nextButton {
+        width: 100%;
+    }
+
+    .emptyState {
+        margin-top: 8vh;
+        padding: 28px 20px;
+        border-radius: 20px;
     }
 }
 

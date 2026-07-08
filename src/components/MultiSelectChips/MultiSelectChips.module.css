@@ -42,6 +42,7 @@
 }
 
 .chip{
+    min-width:0;
     border:1px solid #bcece2;
     background:#e9fbf7;
     color:#0f766e;
@@ -54,6 +55,8 @@
     font-size:13px;
     font-weight:700;
     transition:.2s ease;
+    overflow-wrap:anywhere;
+    text-align:left;
 }
 
 .chip:hover{
@@ -63,6 +66,36 @@
 }
 
 .chip strong{
+    flex:0 0 auto;
     font-size:16px;
     line-height:1;
+}
+
+@media(max-width:520px){
+    .container{
+        gap:12px;
+    }
+
+    .select{
+        height:48px;
+        padding-inline:13px;
+        font-size:16px;
+    }
+
+    .chips{
+        gap:8px;
+    }
+
+    .chip{
+        width:100%;
+        justify-content:space-between;
+        padding:10px 13px;
+        border-radius:14px;
+    }
+
+    .empty{
+        min-height:48px;
+        padding:12px 14px;
+        line-height:1.35;
+    }
 }

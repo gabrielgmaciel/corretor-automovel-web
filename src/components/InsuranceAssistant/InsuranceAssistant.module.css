@@ -85,6 +85,9 @@
 .identity strong {
     font-size: 14px;
     letter-spacing: -.01em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .identity > div > span {
@@ -183,6 +186,7 @@
     font-size: 13px;
     line-height: 1.55;
     white-space: pre-wrap;
+    overflow-wrap: anywhere;
 }
 
 .assistantMessage {
@@ -318,22 +322,56 @@
     box-shadow:
         0 16px 35px rgba(15, 65, 76, .3),
         inset 0 1px rgba(255, 255, 255, .18);
-    animation: launcherBeat 2.2s ease-in-out infinite;
-    transition: transform .2s ease, border-radius .2s ease;
+    transition: transform .2s ease;
+    isolation: isolate;
+}
+
+.launcher::after {
+    content: "";
+    position: absolute;
+    inset: -5px;
+    background: radial-gradient(
+        circle,
+        transparent 68%,
+        rgba(20, 184, 166, .42) 69%,
+        rgba(20, 184, 166, .42) 71%,
+        transparent 72%
+    );
+    border-radius: 50%;
+    opacity: 0;
+    pointer-events: none;
 }
 
 .launcher:hover {
-    animation-play-state: paused;
     transform: translateY(-3px) scale(1.03);
+}
+
+.launcher:focus-visible {
+    outline: none;
+}
+
+.launcher:focus-visible::after {
+    opacity: 1;
 }
 
 .launcherPulse {
     position: absolute;
-    inset: -5px;
+    inset: -6px;
     z-index: -1;
-    border: 1px solid rgba(20, 184, 166, .45);
+    aspect-ratio: 1;
+    box-sizing: border-box;
+    background: radial-gradient(
+        circle,
+        transparent 68%,
+        rgba(20, 184, 166, .45) 69%,
+        rgba(20, 184, 166, .45) 71%,
+        transparent 72%
+    );
     border-radius: 50%;
+    clip-path: circle(50% at 50% 50%);
+    transform-origin: center;
     animation: pulse 2.2s ease-out infinite;
+    pointer-events: none;
 }
 
 .launcherIcon {
@@ -397,28 +435,11 @@
 @keyframes pulse {
     0% {
         opacity: .75;
-        transform: scale(.92);
+        transform: scale(1);
     }
     75%, 100% {
         opacity: 0;
-        transform: scale(1.25);
-    }
-}
-
-@keyframes launcherBeat {
-    0%, 100% {
-        transform: scale(1);
-        box-shadow:
-            0 16px 35px rgba(15, 65, 76, .3),
-            0 0 0 0 rgba(20, 184, 166, .28),
-            inset 0 1px rgba(255, 255, 255, .18);
-    }
-    50% {
-        transform: scale(1.08);
-        box-shadow:
-            0 20px 42px rgba(15, 65, 76, .38),
-            0 0 0 10px rgba(20, 184, 166, 0),
-            inset 0 1px rgba(255, 255, 255, .18);
+        transform: scale(1.34);
     }
 }
 
@@ -489,4 +510,77 @@
 .actionButtons button:last-child {
     color: #334155;
     background: #e2e8f0;
+}
+
+@media (max-width: 520px) {
+    .assistant {
+        right: 10px;
+        bottom: 10px;
+    }
+
+    .panel {
+        inset: 8px 8px 78px;
+        border-radius: 18px;
+    }
+
+    .header {
+        min-height: 66px;
+        padding: 12px;
+    }
+
+    .avatar {
+        flex-basis: 38px;
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+    }
+
+    .identity > div {
+        min-width: 0;
+    }
+
+    .identity > div > span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .messages {
+        padding: 14px 12px;
+    }
+
+    .message {
+        max-width: 90%;
+        font-size: 12px;
+    }
+
+    .composer {
+        padding: 11px 10px;
+    }
+
+    .composer textarea {
+        min-width: 0;
+        min-height: 43px;
+        padding: 11px;
+        font-size: 16px;
+    }
+
+    .composer button {
+        flex-basis: 43px;
+        width: 43px;
+        height: 43px;
+    }
+
+    .actionButtons {
+        flex-direction: column;
+    }
+
+    .actionButtons button {
+        width: 100%;
+    }
+
+    .launcher {
+        width: 56px;
+        height: 56px;
+    }
 }

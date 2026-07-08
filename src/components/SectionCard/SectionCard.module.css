@@ -51,6 +51,7 @@
     display:flex;
     align-items:center;
     gap:13px;
+    min-width:0;
 }
 
 .marker{
@@ -72,11 +73,14 @@
     font-weight:750;
     letter-spacing:-.02em;
     color:#172033;
+    overflow-wrap:anywhere;
+    text-align:left;
 }
 
 .icon{
     width:36px;
     height:36px;
+    flex:0 0 36px;
     border-radius:999px;
     border:1px solid #dbe5f0;
     background:#f8fafc;
@@ -128,6 +132,7 @@
 
 @media(max-width:700px){
     .header{
+        gap:12px;
         padding:18px 20px;
     }
 
@@ -137,5 +142,41 @@
 
     .title{
         font-size:16px;
+    }
+}
+
+@media(max-width:520px){
+    .card{
+        border-radius:18px;
+    }
+
+    .cardAllowOverflow .header{
+        border-radius:17px;
+    }
+
+    .cardAllowOverflow.cardOpen .header{
+        border-radius:17px 17px 0 0;
+    }
+
+    .header{
+        padding:16px;
+    }
+
+    .content{
+        padding:16px;
+    }
+
+    .heading{
+        gap:10px;
+    }
+
+    .marker{
+        height:20px;
+    }
+
+    .icon{
+        width:32px;
+        height:32px;
+        flex-basis:32px;
     }
 }
