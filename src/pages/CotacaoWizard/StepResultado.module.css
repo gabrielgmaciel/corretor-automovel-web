@@ -1,0 +1,3 @@
+.container { display: block; }
+.grid { display: grid; }
+.loading, .finished { display: block; }
