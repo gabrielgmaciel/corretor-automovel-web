@@ -76,4 +76,42 @@ describe("ResultadoCotacao", () => {
         expect(screen.getByRole("button", { name: /avançar/i })).toBeEnabled();
         expect(screen.getByText("Oferta selecionada")).toBeInTheDocument();
     });
+
+    it("shows communication failures and returns to the form preserving its state", async () => {
+        get.mockRejectedValueOnce(new Error("offline"));
+        vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, body: null }));
+        const payload = { segurado: { nome: "Ana" }, veiculo: {} };
+
+        render(
+            <MemoryRouter initialEntries={[{ pathname: "/resultado", state: { payload, formState: { cep: "70000-000" } }}]}>
+                <Routes>
+                    <Route path="/resultado" element={<ResultadoCotacao />} />
+                    <Route path="/" element={<LocationDisplay />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        expect(await screen.findByText("Não foi possível concluir a simulação das cotações.")).toBeInTheDocument();
+        fireEvent.click(screen.getByRole("button", { name: "Voltar" }));
+        expect(await screen.findByText("/")).toBeInTheDocument();
+    });
+
+    it("updates an offer received twice and displays a data-url logo", async () => {
+        const original = { id: "quote-1", grupoCotacao: { codigo: "AUTO", parceiro: { seguradora: "Ázul", produto: "Auto" } }, resumoFinanceiro: { premioTotal: 1500 } };
+        const updated = { ...original, resumoFinanceiro: { premioTotal: 900 } };
+        const encoder = new TextEncoder();
+        vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, body: new ReadableStream({
+            start(controller) {
+                controller.enqueue(encoder.encode(`event: cotacao\ndata: ${JSON.stringify(original)}\n\n`));
+                controller.enqueue(encoder.encode(`event: cotacao\ndata: ${JSON.stringify(updated)}\n\n`));
+                controller.close();
+            }
+        }) }));
+        get.mockResolvedValueOnce({ data: [{ nome: "Auto", seguradora: "Azul", codigoProduto: "auto", logo: "data:image/svg+xml;base64,abc" }] });
+
+        render(<MemoryRouter initialEntries={[{ pathname: "/resultado", state: { payload: { segurado: {}, veiculo: {} } } }]}><Routes><Route path="/resultado" element={<ResultadoCotacao />} /></Routes></MemoryRouter>);
+
+        expect(await screen.findByText(/R\$\s*900,00/)).toBeInTheDocument();
+        expect(screen.getByAltText("Logo Azul")).toHaveAttribute("src", "data:image/svg+xml;base64,abc");
+    });
 });

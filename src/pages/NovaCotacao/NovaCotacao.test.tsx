@@ -88,6 +88,15 @@ describe("NovaCotacao", () => {
         expect(await screen.findByText("Não foi possível carregar os domínios da cotação.")).toBeInTheDocument();
     });
 
+    it("validates required fields before navigating to the result", async () => {
+        render(<MemoryRouter><NovaCotacao /></MemoryRouter>);
+        await waitFor(() => expect(get).toHaveBeenCalledWith("/dominios/coberturas"));
+
+        fireEvent.click(screen.getByRole("button", { name: /solicitar cotação/i }));
+
+        expect(screen.getByText("Preencha os dados obrigatórios do segurado.")).toBeInTheDocument();
+    });
+
     it("searches address and vehicle, accepts every form section and builds the quote payload", async () => {
         get.mockImplementation((url: string) => {
             if (url.startsWith("/enderecos/")) {
@@ -107,10 +116,16 @@ describe("NovaCotacao", () => {
         fireEvent.change(screen.getByPlaceholderText("email@dominio.com"), { target: { value: "ana@email.com" } });
         fireEvent.change(screen.getByPlaceholderText("(61) 99999-8888"), { target: { value: "61999998888" } });
         fireEvent.change(inputFor("Data de nascimento *"), { target: { value: "1990-01-01" } });
+        fireEvent.change(selectFor("Sexo *"), { target: { value: "FEMININO" } });
         fireEvent.change(selectFor("Estado civil *"), { target: { value: "CASADO" } });
         fireEvent.change(screen.getByPlaceholderText("00000-000"), { target: { value: "70000000" } });
         await waitFor(() => expect(screen.getByDisplayValue("Rua A")).toBeInTheDocument());
+        fireEvent.change(screen.getByPlaceholderText("Logradouro"), { target: { value: "Rua B" } });
         fireEvent.change(screen.getByPlaceholderText("Número"), { target: { value: "10" } });
+        fireEvent.change(screen.getByPlaceholderText("Complemento"), { target: { value: "Apto 1" } });
+        fireEvent.change(screen.getByPlaceholderText("Bairro"), { target: { value: "Asa Norte" } });
+        fireEvent.change(screen.getByPlaceholderText("Cidade"), { target: { value: "Brasília" } });
+        fireEvent.change(screen.getByPlaceholderText("UF"), { target: { value: "DF" } });
         fireEvent.change(selectFor("Possui garagem *"), { target: { value: "SIM" } });
 
         fireEvent.change(screen.getByPlaceholderText("Digite o modelo. Ex: Civic"), { target: { value: "Civic" } });
@@ -156,5 +171,28 @@ describe("NovaCotacao", () => {
         expect(screen.getByText("Cobertura não associada: Inexistente.")).toBeInTheDocument();
         expect(screen.getByDisplayValue("123.456.789-01")).toBeInTheDocument();
         expect(post).toHaveBeenCalledWith("/assistente/apolice", expect.any(FormData), expect.any(Object));
+    });
+
+    it("applies assistant suggestions for coverages, protections and franchise", async () => {
+        render(<MemoryRouter><NovaCotacao /></MemoryRouter>);
+        await waitFor(() => expect(get).toHaveBeenCalledWith("/dominios/coberturas"));
+        openSections();
+        await screen.findByText("Danos a terceiros");
+
+        window.dispatchEvent(new CustomEvent("assistente:preencher-coberturas", {
+            detail: [
+                { codigo: "terceiros", valor: 5000 },
+                { codigo: "protege", valor: 200 },
+                { codigo: "vidros" }
+            ]
+        }));
+        window.dispatchEvent(new CustomEvent("assistente:preencher-franquia", {
+            detail: { codigo: "normal" }
+        }));
+
+        expect(await screen.findByDisplayValue(/5\.000,00/)).toBeInTheDocument();
+        expect(screen.getByDisplayValue(/200,00/)).toBeInTheDocument();
+        expect(screen.getByText("Vidros")).toBeInTheDocument();
+        expect(selectFor("Selecione a franquia *")).toHaveValue("normal");
     });
 });
